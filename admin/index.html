@@ -98,10 +98,6 @@
                 $('.user_center_link img').attr('src', backData.data.userPic);
             }
         });
-        $('.logout').on('click', function () {
-            localStorage.removeItem('token');
-            window.location.href = './login.html'
-        })
         //暂开二级列表
         $('.level01:nth-child(2)').on('click', function () {
             $('.level02').slideToggle();

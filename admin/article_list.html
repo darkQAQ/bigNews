@@ -11,8 +11,35 @@
     <link rel="stylesheet" href="./css/iconfont.css">
     <link rel="stylesheet" href="./css/main.css">
     <script src="./libs/jquery-1.12.4.min.js"></script>
+    <script src="./libs/http.js"></script>
+    <script src="./libs/bootstrap.min.js"></script>
+    <script src="./libs/jquery.twbsPagination.min.js"></script>
     <!-- 引入模板引擎js文件 -->
     <script src="./libs/template-web.js"></script>
+    <!-- 所有分类模板 -->
+    <script id="template-all" type="text/html">
+        <option value="">所有分类</option>
+        {{each data v}}
+        <option value="{{v.id}}">{{v.name}}</option>
+        {{/each}}
+    </script>
+
+    <!-- 所有文章模板 -->
+    <script id="template-article" type="text/html">
+        {{each data.data v}}
+        <tr>
+            <td>{{v.title}}</td>
+            <td>{{v.author}}</td>
+            <td>{{v.category}}</td>
+            <td class="text-center">{{v.date}}</td>
+            <td class="text-center">{{v.state}}</td>
+            <td class="text-center">
+                <a href="article_edit.html" data-id="{{v.id}}" class="btn btn-default btn-xs">编辑</a>
+                <a href="javascript:void(0);" data-id="{{v.id}}" class="btn btn-danger btn-xs delete">删除</a>
+            </td>
+        </tr>
+        {{/each}}
+    </script>
 </head>
 
 <body>
@@ -69,9 +96,78 @@
                 </tbody>
             </table>
             <div class="row text-center">
+                <!-- 页数 -->
+                <ul id="pagination" class="pagination"></ul>
             </div>
         </div>
     </div>
 </body>
+<script>
+    $(function () {
+        //获取所有文章类别 
+        $.ajax({
+            type: 'get',
+            url: BigNew.category_list,
+            success: function (backData) {
+                // console.log(backData);
+                var newHtml = template('template-all', backData);
+                $('#selCategory').html(newHtml);
+            }
+        });
+
+        //进入页面获取所有文章生成到页面
+        getData(1, function (backData) {
+            $('#pagination').twbsPagination({
+                totalPages: backData.data.totalPage,
+                visiblePages: 7,
+                first: '首页',
+                prev: '上一页',
+                next: '下一页',
+                last: '尾页',
+                onPageClick: function (event, page) {
+                    $('#page-content').text('Page ' + page);
+                    getData(page, null);
+                }
+            });
+        });
+   
+
+        //筛选按钮
+        $('#btnSearch').on('click', function (e) {
+            e.preventDefault();
+            getData(1,function(backData){
+                $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, 1);
+            })
+            
+        })
+
+        //封装函数
+        function getData(myPage, callback) {
+            $.ajax({
+                type: 'get',
+                url: BigNew.article_query,
+                data: {
+                    type: $('#selCategory').val(),
+                    state: $('#selStatus').val(),
+                    page: myPage,
+                    perpage: 6
+                },
+                success: function (backData) {
+                    console.log("backData", backData)
+                    if (backData.code == 200) {
+                        var newHtml = template('template-article', backData);
+                        $('tbody').html(newHtml);
+                        if (callback != null) {
+                            callback(backData);
+                        }
+                    }
+
+                }
+            })
+        }
+
+
+    })
+</script>
 
 </html>
