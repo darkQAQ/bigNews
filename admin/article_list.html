@@ -98,6 +98,7 @@
             <div class="row text-center">
                 <!-- 页数 -->
                 <ul id="pagination" class="pagination"></ul>
+                <p>没有数据</p>
             </div>
         </div>
     </div>
@@ -114,6 +115,8 @@
                 $('#selCategory').html(newHtml);
             }
         });
+        //变量 存储全局当前点击页
+        var currentPage = 1;
 
         //进入页面获取所有文章生成到页面
         getData(1, function (backData) {
@@ -127,18 +130,20 @@
                 onPageClick: function (event, page) {
                     $('#page-content').text('Page ' + page);
                     getData(page, null);
+                    currentPage = page;
                 }
             });
         });
-   
+
 
         //筛选按钮
         $('#btnSearch').on('click', function (e) {
             e.preventDefault();
-            getData(1,function(backData){
+            currentPage = 1;
+            getData(1, function (backData) {
                 $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, 1);
             })
-            
+
         })
 
         //封装函数
@@ -150,23 +155,54 @@
                     type: $('#selCategory').val(),
                     state: $('#selStatus').val(),
                     page: myPage,
-                    perpage: 6
+                    perpage: 2
                 },
                 success: function (backData) {
                     console.log("backData", backData)
                     if (backData.code == 200) {
                         var newHtml = template('template-article', backData);
                         $('tbody').html(newHtml);
-                        if (callback != null) {
+                        //回调函数不等于空        返回的当前页的文章数 不为 0   有数据
+                        if (callback != null && backData.data.data.length != 0) {
                             callback(backData);
+                            $('#pagination').show().next('p').hide();
+                        }
+                        // 返回的当前页的文章数为0  并且 文章页数是第一页    没有数据
+                        else if (backData.data.data.length == 0 && currentPage == 1) {
+                            $('#pagination').hide().next('p').show();
+                        }
+                        // 返回的文章页数为 当前点击页数-1      返回的当前页的文章数为0    说明当前最后一页没有数据
+                        else if (backData.data.totalPage == currentPage - 1 && backData.data.data.length == 0) {
+                            //重新绘制分页 点击页为当前点击页的前一页
+                            $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, currentPage - 1);
                         }
                     }
-
                 }
             })
         }
+        //删除按钮
+        $('tbody').on('click', '.delete', function () {
+            var delId = $(this).attr('data-id');
+            $.ajax({
+                type: 'post',
+                url: BigNew.article_delete,
+                data: { id: delId },
+                success: function (backData) {
+                    if (backData.code == 204) {
+                        alert('删除成功');
+                        getData(currentPage, function (backData) {
+                            //每次删除 重新绘制分页  解决在倒数第二页删除一页的数据  还要点击最后一页 才能重新绘制页数的bug
+                            $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, currentPage);
+                        });
+                    }
+                }
+            });
+        })
 
-
+        //点击发表文章按钮
+        $('#release_btn').on('click', function () {
+            parent.$('.level02 li:eq(1)').click();
+        })
     })
 </script>
 
