@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/reset.css">
     <link rel="stylesheet" href="css/font-awesome.min.css">
     <link rel="stylesheet" href="css/main.css">
+    <script src="./admin/libs/jquery-1.12.4.min.js"></script>
 </head>
 
 <body>
@@ -227,6 +228,162 @@
     <script src="./js/template-web.js"></script>
     <!-- 引入jq文件 -->
     <script src="./js/jquery-1.12.4.min.js"></script>
+
+    <!-- 最新资讯模板 -->
+    <script id="template-news" type="text/html">
+        {{each data v}}
+        <div class="common_news_list">
+            <a href="./article.html?id={{v.id}}" class="list_pic"><img src="{{v.cover}}"></a>
+                <h4><a href="./article.html?id={{v.id}}">{{v.title}} </a></h4>
+                <p>{{@ v.intro}}</p>
+                <div class="new_info">
+                    <span>标签：{{v.category}}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<i class="fa fa-eye"></i>&nbsp;阅读( {{v.read}} )&nbsp;&nbsp;&nbsp;<i class="fa fa-commenting"></i>&nbsp;评论( {{v.comments}} )</span>
+                    <b>发布于 {{v.date}}</b>
+                </div>
+                </div>
+         {{/each}}       
+    </script>
+
+    <!-- 热点图 -->
+    <script id="template-hot" type="text/html">
+        {{each data v}}
+        {{if $index == 0}}
+        <li class="first">
+        {{else}}
+        <li >
+        {{/if}}
+            <a href="./article.html?id={{v.id}}"><img src="{{v.cover}}" alt=""></a>
+            <p>{{v.title}}</p>
+        </li>
+         {{/each}}       
+    </script>
+
+    <!-- 热门排行 -->
+    <script id="template-hotTop" type="text/html">
+        {{each data v}}
+            {{if $index == 0}}
+            <li><span class="first">1</span><a href="./article.html?id={{v.id}}">{{v.title}}</a></li>
+            {{else if $index == 1}}
+            <li><span class="second">2</span><a href="./article.html?id={{v.id}}">{{v.title}}</a></li>
+            {{else if $index == 2}}
+            <li><span class="third">3</span><a href="./article.html?id={{v.id}}">{{v.title}}</a></li>
+            {{else}}
+            <li><span>{{$index+1}}</span><a href="./article.html?id={{v.id}}">{{v.title}}</a></li>
+            {{/if}}
+         {{/each}}       
+    </script>
+
+    <!-- 最新评论 -->
+    <script id="template-comment" type="text/html">
+        {{each data v}}
+        <li>
+            <span>{{v.author.substring(0,1)}}</span>
+            <b><em>{{v.author}}</em> {{v.date}}说:</b>
+            <strong>{{v.intro}}</strong>
+        </li>
+         {{/each}}       
+    </script>
+
+    <!-- 焦点关注 -->
+    <script id="template-attention" type="text/html">
+    {{each data v}}
+    <li><a href="./article.html?id={{v.id}}">{{@ v.intro}}</a></li>
+     {{/each}}       
+     
+    </script>
+
+    <!-- 所有分类 -->
+    <script id="template-category" type="text/html">
+    {{each data v}}
+    <li><a href="./list.html?categoryId={{v.id}}">{{v.name}}</a></li>
+     {{/each}}       
+     
+    </script>
+
+
+
+    <script>
+        $(function () {
+            //获取最新资讯
+            $.ajax({
+                type: 'get',
+                url: 'http://localhost:8080/api/v1/index/latest',
+                success: function (backData) {
+                    // console.log(backData);
+                    var newHtml = template('template-news', backData);
+                    $('.common_news').html(newHtml);
+                }
+            });
+
+            //热点图
+            $.ajax({
+                type: 'get',
+                url: 'http://localhost:8080/api/v1/index/hotpic',
+                success: function (backData) {
+                    // console.log(backData);
+                    var newHtml = template('template-hot', backData);
+                    $('.focus_list').html(newHtml);
+                }
+            });
+
+            //排行
+            $.ajax({
+                type: 'get',
+                url: 'http://localhost:8080/api/v1/index/rank',
+                success: function (backData) {
+                    // console.log(backData);
+                    var newHtml = template('template-hotTop', backData);
+                    $('.hotrank_list').html(newHtml);
+                }
+            });
+
+            //最新评论
+            $.ajax({
+                type: 'get',
+                url: 'http://localhost:8080/api/v1/index/latest_comment',
+                success: function (backData) {
+                    // console.log(backData);
+                    var newHtml = template('template-comment', backData);
+                    $('.comment_list').html(newHtml);
+                }
+            });
+
+            //焦点关注
+            $.ajax({
+                type: 'get',
+                url: 'http://localhost:8080/api/v1/index/attention',
+                success: function (backData) {
+                    // console.log(backData);
+                    var newHtml = template('template-attention', backData);
+                    $('.guanzhu_list').html(newHtml);
+                }
+            });
+
+            //nav分类
+            $.ajax({
+                type: 'get',
+                url: 'http://localhost:8080/api/v1/index/category',
+                success: function (backData) {
+                    // console.log(backData);
+                    var newHtml = template('template-category', backData);
+                    $('.level_two').html('<li class="up"></li>'+newHtml);
+                    $('.left_menu ').html('<li class="up"></li>'+newHtml);
+
+                }
+            });
+
+            //文章搜索页面
+            $('.search_btn').on('click',function(){
+                var searchVal = $('.search_txt').val().trim();
+                if(searchVal==''){
+                    alert('输入为空');
+                    return;
+                }
+                window.location.href = './list.html?search='+searchVal;
+            })
+
+        })
+    </script>
 </body>
 
 </html>
